@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Web Audio API</title>
+	<link rel="stylesheet" type="text/css" href="vendors/css/reveal.css">
+	<link rel="stylesheet" type="text/css" href="vendors/css/league.css">
+	<link rel="stylesheet" type="text/css" href="vendors/css/zenburn.css">
+	<link rel="stylesheet" type="text/css" href="vendors/css/monokai-sublime.css">
+	<link rel="stylesheet" type="text/css" href="vendors/css/960.css">
+	<link rel="stylesheet" type="text/css" href="src/css/style.css">
+</head>
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section>
+				<img src="src/img/catsynthspace.jpg" height="400">
+				<h1>Web Audio API</h1>
+			</section>
+
+			<section>
+				<p>Web Audio API != &lt;audio&gt;</p>
+			</section>
+
+			<section>
+				<h2>&lt;audio&gt;</h2>
+				<ul>
+					<li class="fragment">Lecture basique</li>
+					<li class="fragment">Timing +/- précis</li>
+					<li class="fragment">Limité quand au nombre de sons joués simultanément</li>
+					<li class="fragment">Aucune possibilité d'appliquer des effets</li>
+					<li class="fragment">Aucune possibilité d'analyser l'audio</li>
+				</ul>
+			</section>
+
+			<section>
+				<h2>Web Audio API to the rescue!</h2>
+			</section>
+
+			<section>
+				<h2>Un peu d'AudioContext</h2>
+				<pre><code class="hljs" data-trim contenteditable>
+var audioContext = new AudioContext() || new webkitAudioContext();
+				</code></pre>
+			</section>
+
+			<section>
+				<section>
+					<h2>Les AudioNodes:</h2>
+					<h3>Géneration</h3>
+					<div><small>Celles qui font du bruit</small></div>
+				</section>
+
+				<section>
+					<h4>OscillatorNode</h4>
+					<pre><code class="hljs" data-trim id="exampleOscillatorNode" contenteditable>
+var source = audioContext.createOscillator();
+source.connect(audioContext.destination);
+source.start();
+source.stop(audioContext.currentTime + 1);
+					</code></pre>
+					<button class="eval" data-target="#exampleOscillatorNode">Play</button>
+				</section>
+
+				<section>
+					<h4>AudioBuffer & AudioBufferSourceNode</h4>
+					<p>Pour contenir des petits extraits audio < 45s</p>
+					<pre><code class="hljs" data-trim id="exampleAudioBufferNode" contenteditable>
+var sourceBuffer = audioContext.createBufferSource();
+var request = new XMLHttpRequest();
+	 
+request.open('GET', 'src/lyncollins-thinkaboutit.wav', true);
+request.responseType = 'arraybuffer';
+ 
+request.onload = function () {
+    var undecodedAudio = request.response;
+
+    audioContext.decodeAudioData(undecodedAudio, function (buffer) {
+    	sourceBuffer.buffer = buffer;
+        sourceBuffer.connect(audioContext.destination);
+        //sourceBuffer.loop = true;
+        //sourceBuffer.playbackRate.value = 2;
+        sourceBuffer.start();
+        //sourceBuffer.stop(audioContext.currentTime + 5);
+    });
+};
+ 
+request.send();
+					</code></pre>
+					<button class="eval" data-target="#exampleAudioBufferNode">Play</button>
+				</section>
+				
+				<section>
+					<h4>MediaElementAudioSourceNode</h4>
+					<p>AudioNode ayant comme source un element &lt;audio&gt; ou &lt;video&gt;</p>
+					<p>Pour les extraits audio de longue durée</p>
+					<audio src="src/lyncollins-thinkaboutit.wav" id="myAudioElement"></audio>
+					<pre><code class="hljs" data-trim id="exampleMediaElementAudioSourceNode" contenteditable>
+var audioElement = document.getElementById('myAudioElement');
+var AudioSourceNode = audioContext.createMediaElementSource(audioElement);
+AudioSourceNode.connect(audioContext.destination);
+AudioSourceNode.mediaElement.play();
+//mediaElementAudioSourceNode.stop(audioContext.currentTime + 5);
+					</code></pre>
+					<button class="eval" data-target="#exampleMediaElementAudioSourceNode">Play</button>
+				</section>
+
+				<section>
+					<h4>MediaStreamAudioSourceNode</h4>
+					<p>AudioNode ayant pour source </p>
+					<p>Pour les extraits audio de longue durée</p>
+					<audio src="src/lyncollins-thinkaboutit.wav" id="myAudioElement"></audio>
+					<pre><code class="hljs" data-trim id="exampleStreamElementAudioSourceNode" contenteditable>
+navigator.getUserMedia = (navigator.getUserMedia ||
+	navigator.webkitGetUserMedia ||
+	navigator.mozGetUserMedia ||
+	navigator.msGetUserMedia);
+
+navigator.getUserMedia({audio: true, video: false}, function(stream){
+	mediaStreamSource = audioContext.createMediaStreamSource(stream);
+	mediaStreamSource.connect(audioContext.destination);
+}, function(err) {
+	console.log('The following gUM error occured: ' + err);
+});
+					</code></pre>
+					<button class="eval" data-target="#exampleStreamElementAudioSourceNode">Play</button>
+				</section>
+			</section>
+
+			<section>
+				<section>
+					<h2>Les AudioNodes:</h2>
+					<h3>Traitement</h3>
+					<div><small>Celles qui manipulent le bruit</small></div>
+				</section>
+				<section>
+					<h4>GainNode</h4>
+					<pre><code class="hljs" data-trim id="exampleGainNode" contenteditable>
+var osc = audioContext.createOscillator();
+var amp = audioContext.createGain();
+
+osc.type = "sawtooth";
+osc.frequency.value = 50;
+
+osc.connect(amp);
+amp.connect(audioContext.destination);
+
+amp.gain.setValueAtTime(0.001, audioContext.currentTime);
+amp.gain.exponentialRampToValueAtTime(1, audioContext.currentTime + 1);
+amp.gain.setValueAtTime(1, audioContext.currentTime + 1);
+amp.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2);
+
+osc.start();
+osc.stop(audioContext.currentTime + 3);
+					</code></pre>
+					<button class="eval" data-target="#exampleGainNode">Play</button>
+				</section>
+
+				<section>
+					<h4>BiquadFilterNode</h4>
+					<pre><code class="hljs" data-trim id="exampleFilterNode" contenteditable>
+var osc = audioContext.createOscillator();
+var filter = audioContext.createBiquadFilter();
+
+osc.type = "sawtooth";
+osc.frequency.value = 50;
+
+osc.connect(filter);
+filter.connect(audioContext.destination);
+
+filter.type = "lowpass"; //lowpass, highpass, bandpass, lowshelf, highshelf, peaking, notch, allpass
+
+filter.frequency.setValueAtTime(0.001, audioContext.currentTime);
+filter.frequency.exponentialRampToValueAtTime(5000, audioContext.currentTime + 1);
+filter.frequency.setValueAtTime(5000, audioContext.currentTime + 1);
+filter.frequency.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2);
+
+osc.start();
+osc.stop(audioContext.currentTime + 3);
+					</code></pre>
+					<button class="eval" data-target="#exampleFilterNode">Play</button>
+				</section>
+
+				<section>
+					<h4>DelayNode</h4>
+					<pre><code class="hljs" data-trim id="exampleDelayNode" contenteditable>
+var osc = audioContext.createOscillator();
+
+osc.type = "sawtooth";
+osc.frequency.value = 50;
+
+osc.start();
+osc.stop(audioContext.currentTime + .1);
+
+var delay = audioContext.createDelay();
+delay.delayTime.value = 0.5;
+
+var feedback = audioContext.createGain();
+feedback.gain.value = 0.5;
+
+delay.connect(feedback);
+feedback.connect(delay);
+
+osc.connect(delay);
+osc.connect(audioContext.destination);
+delay.connect(audioContext.destination);
+					</code></pre>
+					<button class="eval" data-target="#exampleDelayNode">Play</button>
+				</section>
+
+				<section>
+					<h4>PannerNode</h4>
+					<pre><code class="hljs" data-trim id="exampleStereoPannerNode" contenteditable>
+var osc = audioContext.createOscillator();
+var stereo = audioContext.createStereoPanner();
+
+osc.type = "sawtooth";
+osc.frequency.value = 50;
+
+osc.connect(stereo);
+stereo.connect(audioContext.destination);
+
+stereo.pan.setValueAtTime(-1, audioContext.currentTime);
+stereo.pan.linearRampToValueAtTime(1, audioContext.currentTime + 3);
+
+osc.start();
+osc.stop(audioContext.currentTime + 3);
+					</code></pre>
+					<button class="eval" data-target="#exampleStereoPannerNode">Play</button>
+				</section>
+
+				<section>
+					<h4>ConvolverNode</h4>
+					<pre><code class="hljs" data-trim id="exampleConvolverNode" contenteditable>
+var reverb = audioContext.createConvolver();
+var osc = audioContext.createOscillator();
+osc.type = "sawtooth";
+osc.frequency.value = 100;
+var request = new XMLHttpRequest();
+	 
+request.open('GET', 'src/impulse.wav', true);
+request.responseType = 'arraybuffer';
+ 
+request.onload = function () {
+    var undecodedAudio = request.response;
+
+    audioContext.decodeAudioData(undecodedAudio, function (buffer) {
+    	reverb.buffer = buffer;
+    	osc.connect(audioContext.destination);
+    	osc.connect(reverb);
+        reverb.connect(audioContext.destination);
+
+        osc.start();
+        osc.stop(audioContext.currentTime + .1);
+    });
+};
+ 
+request.send();
+					</code></pre>
+					<button class="eval" data-target="#exampleConvolverNode">Play</button>
+				</section>
+
+				<section>
+					<h4>ConvolverNode</h4>
+					<pre><code class="hljs" data-trim id="exampleConvolverNode" contenteditable>
+var reverb = audioContext.createConvolver();
+var osc = audioContext.createOscillator();
+osc.type = "sawtooth";
+osc.frequency.value = 100;
+var request = new XMLHttpRequest();
+	 
+request.open('GET', 'src/impulse.wav', true);
+request.responseType = 'arraybuffer';
+ 
+request.onload = function () {
+    var undecodedAudio = request.response;
+
+    audioContext.decodeAudioData(undecodedAudio, function (buffer) {
+    	reverb.buffer = buffer;
+    	osc.connect(audioContext.destination);
+    	osc.connect(reverb);
+        reverb.connect(audioContext.destination);
+
+        osc.start();
+        osc.stop(audioContext.currentTime + .1);
+    });
+};
+ 
+request.send();
+					</code></pre>
+					<button class="eval" data-target="#exampleConvolverNode">Play</button>
+				</section>
+				
+			</section>
+
+			<section>
+				<section>
+					<h2>Les AudioNodes</h2>
+					<h3>Analyse</h3>
+					<p>Celles qui analysent le bruit</p>
+				</section>
+
+				<section>
+					<h4>AudioAnalyserNode</h4>
+					<pre><code class="hljs" data-trim contenteditable>
+var analyser = audioContext.createAnalyser();
+source.connect(analyser);
+					</code></pre>
+				</section>
+
+				<section>
+					<div><canvas id="freqanalysis" height="100" width="200"></canvas></div>
+					<audio src="src/lyncollins-thinkaboutit.wav" id="analysisAudioTrack" controls="true"></audio>
+					<pre><code class="hljs" data-trim contenteditable>
+var freqData     = Uint8Array(analyser.frequencyBinCount);
+var canvasHeight = canvas.height;
+var canvasWidth  = canvas.height;
+
+function draw(){
+	analyser.getByteFRequencyData(freqData);
+	for(var i = 0; i < analyser.frequencyBinCount; i++){
+		var value     = freqData[i];
+		var percent   = value / 255; // Because it's an 8bit unsigned int (max value = 255)
+		var batHeight = canvasHeight * percent;
+		var barWidth  = canvasWidth / analyser.frequencyBinCount;
+		var barHue    = i / analyser.frequencyBinCount * 360;
+		canvasCtx.fillStyle = 'hsl(' + barHue + ', 100%, 50%)';
+		canvasCtx.fillRect(i * barWidth, 0, barWidth, barHeight);
+	}
+}
+					</code></pre>
+					<span id="test"></span>
+				</section>
+			</section>
+
+			<section>
+				<h2>Les AudioNodes</h2>
+				<pre><code class="hljs" data-trim contenteditable>
+AudioNode.connect(AudioNode);
+				</code></pre>
+				<p>Connecte l'output d'un module à 'input d'une seconde</p>
+			</section>
+
+			<section>
+				<img src="src/img/schema-audiocontext.png">
+				<pre><code class="hljs" data-trim id="example1" contenteditable>
+var source = audioContext.createOscillator();
+source.connect(audioContext.destination);
+source.start();
+source.stop(audioContext.currentTime + 1);
+				</code></pre>
+				<button class="eval" data-target="#example1">Play</button>
+			</section>
+
+			<section>
+				<img src="src/img/schema-audiocontext.png">
+				<pre><code class="hljs" data-trim id="example1" contenteditable>
+var source = audioContext.createOscillator();
+source.connect(audioContext.destination);
+source.start();
+source.stop(audioContext.currentTime + 1);
+				</code></pre>
+				<button class="eval" data-target="#example1">Play</button>
+			</section>
+
+			<!--<section>
+				<h2>Un peu d'AudioContext</h2>
+				<figure>
+					<img src="src/img/schema-audiocontext2.png">
+					<figcaption>Un graphe audio un peu plus complexe<figcaption>
+				</figure>
+			</section>-->
+		</div>
+	</div>
+</body>
+
+<script src="vendors/js/jquery-2.2.0.min.js"></script>
+<script src="vendors/js/reveal.js"></script>
+<script src="vendors/js/highlight.js"></script>
+
+<script>
+	Reveal.initialize({
+		history: true,
+	});
+	hljs.initHighlightingOnLoad();
+
+	var audioContext = new AudioContext() || new webkitAudioContext();
+
+	$('.eval').click(function(e){
+		var targetId = $(this).attr('data-target');
+		var $code = $(targetId);
+		if($code.length){
+			eval($code.text());
+		}
+	})
+
+	var canvas   = document.getElementById('freqanalysis');
+	var canvasCtx= canvas.getContext('2d');
+	var analyser = audioContext.createAnalyser();
+	var audio    = audioContext.createMediaElementSource(document.getElementById('myAudioElement'));
+	var canvasHeight = canvas.height;
+	var canvasWidth  = canvas.height;
+	audio.connect(analyser);
+
+	function draw(){
+		var freqData = new Uint8Array(analyser.frequencyBinCount);
+		analyser.getByteFrequencyData(freqData);
+		for(var i = 0; i < analyser.frequencyBinCount; i++){
+			var value     = freqData[i];
+			var percent   = value / 255; // Because it's an 8bit unsigned int (max value = 255)
+			var barHeight = canvasHeight * percent + 50;
+			var barWidth  = canvasWidth / analyser.frequencyBinCount;
+			var barHue    = i / analyser.frequencyBinCount * 360;
+			canvasCtx.fillStyle = 'hsl(' + barHue + ', 100%, 50%)';
+			canvasCtx.fillRect(i * barWidth, canvasHeight, barWidth, -barHeight);
+		}
+		requestAnimationFrame(draw);
+	}
+	draw();
+</script>
+</html>

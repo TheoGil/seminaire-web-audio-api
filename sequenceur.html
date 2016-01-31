@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Métronome</title>
+	<style>
+		body{
+			font-family: sans-serif;
+			text-align: center;
+			/* Permalink - use to edit and share this gradient: http://colorzilla.com/gradient-editor/#000000+2,000000+100&0+20,0.08+72,0.1+99 */
+			background: -moz-radial-gradient(center, ellipse cover,  rgba(0,0,0,0) 2%, rgba(0,0,0,0) 20%, rgba(0,0,0,0.08) 72%, rgba(0,0,0,0.1) 99%, rgba(0,0,0,0.1) 100%); /* FF3.6-15 */
+			background: -webkit-radial-gradient(center, ellipse cover,  rgba(0,0,0,0) 2%,rgba(0,0,0,0) 20%,rgba(0,0,0,0.08) 72%,rgba(0,0,0,0.1) 99%,rgba(0,0,0,0.1) 100%); /* Chrome10-25,Safari5.1-6 */
+			background: radial-gradient(ellipse at center,  rgba(0,0,0,0) 2%,rgba(0,0,0,0) 20%,rgba(0,0,0,0.08) 72%,rgba(0,0,0,0.1) 99%,rgba(0,0,0,0.1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', endColorstr='#1a000000',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+		}
+		#sequencer{
+		    display: inline-block;
+		    text-align: left;
+		}
+		.channels{
+			margin-bottom: 20px;
+		}
+		.settings{
+			padding-left: 50px;
+			margin-bottom: 20px;
+		}
+		.pannel{
+			display: inline-block;
+			vertical-align: top;
+		}
+		.instrument-title{
+			display: inline-block;
+			width: 50px;
+			vertical-align: middle;
+		}
+		.channel .note{
+			position: relative;
+			display: inline-block;
+			width: 50px;
+			min-height: 50px;
+			background: #F6F1EB;
+			border: 1px black solid;
+			border-radius: 5px;
+
+			-webkit-transition: all 0.05s ease-in;
+    		transition: all 0.05s ease-in;
+		}
+		.channel .note.active{
+			background: #D3C7BB;
+		    -moz-box-shadow: inset 2px 2px 10px 0px rgba(0, 0, 0, .2);
+		    -webkit-box-shadow: inset 2px 2px 10px 0px rgba(0, 0, 0, .2);
+		    -o-box-shadow: inset 2px 2px 10px 0px rgba(0, 0, 0, .2);
+		    box-shadow: inset 2px 2px 10px 0px rgba(0, 0, 0, .2);
+		    filter: progid:DXImageTransform.Microsoft.Shadow(color=#656565, Direction=134, Strength=10)
+		}
+		.channel .note.keyboard{
+			background: transparent;
+		}
+		.channel .note.keyboard.active{
+			background: transparent;
+			box-shadow: none;
+		}
+		.channel .note.current:before{
+			content: '';
+			position: absolute;
+			top: -5px;
+			right: -5px;
+			bottom: -5px;
+			left: -5px;
+			background: rgba(0, 0, 0, .5);
+		}
+		.channel canvas{
+			display: inline-block;
+			width: 50px;
+			height: 50px;
+		}
+		.keyboard .key{
+			width: 100%;
+			-webkit-transition: all 0.05s ease-in;
+    		transition: all 0.05s ease-in;
+			height: 15px;
+			border: 1px black solid;
+			text-align: right;
+		}
+		.keyboard .key:first-of-type{
+			border-radius: 5px 5px 0px 0px;
+		}
+		.keyboard .key:last-of-type{
+			border-radius: 0px 0px 5px 5px ;
+		}
+		.keyboard .key.active, .keyboard .key.minor.active{
+			background: #D3C7BB;;
+		}
+		.keyboard .key.minor{
+			z-index: 10;
+		    background: black;
+		    vertical-align: top;
+		    margin-top: -8px;
+		    margin-bottom: -8px;
+		    width: 50%;
+		}
+	</style>
+</head>
+<body>
+	<div id="sequencer">
+		<div class="settings">
+			<div class="pannel">
+				<label>BMP:</label>
+				<input type="number" name="bpm" value="115" id="bpm">
+				<button id="play">Play</button>
+				<button id="stop">Stop</button>
+			</div>
+		</div>
+
+		<div class="channels">
+			<div class="channel" data-instrument="hihat">
+				<div class="instrument-title">HIHAT</div>
+				<div class="note" data-beat="0"></div>
+				<div class="note" data-beat="1"></div>
+				<div class="note" data-beat="2"></div>
+				<div class="note" data-beat="3"></div>
+				<div class="note" data-beat="4"></div>
+				<div class="note" data-beat="5"></div>
+				<div class="note" data-beat="6"></div>
+				<div class="note" data-beat="7"></div>
+				<div class="note" data-beat="8"></div>
+				<div class="note" data-beat="9"></div>
+				<div class="note" data-beat="10"></div>
+				<div class="note" data-beat="11"></div>
+				<div class="note" data-beat="12"></div>
+				<div class="note" data-beat="13"></div>
+				<div class="note" data-beat="14"></div>
+				<div class="note" data-beat="15"></div>
+				<canvas id="canvasWaveformChannel1" width="50" height="50"></canvas>
+			</div>
+			<div class="channel" data-instrument="snare">
+				<div class="instrument-title">CLAP</div>
+				<div class="note" data-beat="0"></div>
+				<div class="note" data-beat="1"></div>
+				<div class="note" data-beat="2"></div>
+				<div class="note" data-beat="3"></div>
+				<div class="note" data-beat="4"></div>
+				<div class="note" data-beat="5"></div>
+				<div class="note" data-beat="6"></div>
+				<div class="note" data-beat="7"></div>
+				<div class="note" data-beat="8"></div>
+				<div class="note" data-beat="9"></div>
+				<div class="note" data-beat="10"></div>
+				<div class="note" data-beat="11"></div>
+				<div class="note" data-beat="12"></div>
+				<div class="note" data-beat="13"></div>
+				<div class="note" data-beat="14"></div>
+				<div class="note" data-beat="15"></div>
+				<canvas id="canvasWaveformChannel2" width="50" height="50"></canvas>
+			</div>
+			<div class="channel" data-instrument="kick">
+				<div class="instrument-title">KICK</div>
+				<div class="note" data-beat="0"></div>
+				<div class="note" data-beat="1"></div>
+				<div class="note" data-beat="2"></div>
+				<div class="note" data-beat="3"></div>
+				<div class="note" data-beat="4"></div>
+				<div class="note" data-beat="5"></div>
+				<div class="note" data-beat="6"></div>
+				<div class="note" data-beat="7"></div>
+				<div class="note" data-beat="8"></div>
+				<div class="note" data-beat="9"></div>
+				<div class="note" data-beat="10"></div>
+				<div class="note" data-beat="11"></div>
+				<div class="note" data-beat="12"></div>
+				<div class="note" data-beat="13"></div>
+				<div class="note" data-beat="14"></div>
+				<div class="note" data-beat="15"></div>
+				<canvas id="canvasWaveformChannel3" width="50" height="50"></canvas>
+			</div>
+			<div class="channel" data-instrument="bass">
+				<div class="instrument-title">BASS</div>
+				<div class="note keyboard" data-beat="0">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="1">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="2">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="3">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="4">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="5">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="6">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="7">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="8">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="9">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="10">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="11">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="12">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="13">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="14">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<div class="note keyboard" data-beat="15">
+					<div class="key" data-freq="61.7"></div>
+					<div class="key minor" data-freq="58.3"></div>
+					<div class="key" data-freq="55"></div>
+					<div class="key minor" data-freq="51.9"></div>
+					<div class="key" data-freq="49"></div>
+					<div class="key" data-freq="46.2"></div>
+					<div class="key minor" data-freq="43.7"></div>
+					<div class="key" data-freq="41.2"></div>
+					<div class="key minor" data-freq="38.9"></div>
+					<div class="key" data-freq="36.7"></div>
+					<div class="key minor" data-freq="34.6"></div>
+					<div class="key" data-freq="32.7"></div>
+				</div>
+				<canvas id="canvasWaveformChannel4" width="50" height="50"></canvas>
+			</div>
+		</div>
+		
+		<div class="settings">
+			<div class="pannel" id="bass">
+				BASS SETTINGS
+				<div>
+					Release
+					<input type="range"  min="0" max="1" step="0.1" data-target="release" class="bass-setting" value="500">
+					<span class"length"></span>
+				</div>
+				<div>
+					Filter Frequency
+					<input type="range"  min="1" max="20000" step="100" data-target="filterFreq" class="bass-setting" value="18000">
+					<span class"length"></span>
+				</div>
+			</div>
+			<div class="pannel">
+				MASTER FILTER SETTINGS
+				<div>
+					<label>
+						Frequency
+						<input id="master-filter-freq" type="range"  min="1" max="20000" step="100" value="20000">
+					</label>
+				</div>
+				<div>
+					<label for="">
+						Resonance
+						<input id="master-filter-q" type="range"  min="1" max="25" step="1" value="1">
+					</label>
+				</div>
+				<div>
+					<label>
+						Type
+						<select id="master-filter-type">
+							<option value="lowpass">Lowpass</option>
+							<option value="highpass">Highpass</option>
+							<option value="bandpass">Bandpass</option>
+						</select>
+					</label>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+<script src="src/js/scheduler.js"></script>
+<script>
+	
+	$('#play').click(function(){
+		scheduler.start();
+	});
+	$('#stop').click(function(){
+		scheduler.stop();
+	});
+
+	$('.note').click(function(){
+		$(this).toggleClass('active');
+	});
+	$('.note').on('click', '.key', function(e){
+		e.stopPropagation();
+		if($(this).hasClass('active')){
+			$(this).removeClass('active');
+			$(this).closest('.note').removeClass('active');
+		} else {
+			$(this).closest('.keyboard').find('.key.active').removeClass('active');
+			$(this).addClass('active');
+			$(this).closest('.note').addClass('active');
+		}
+	});
+
+	$('.bass-setting').on('input', function(){
+		$container = $(this).closest('.bass-setting');
+		$container.find('span').text($(this).val()+'ms');
+		instruments['bass'][$(this).data('target')] = parseFloat($(this).val());
+	});
+	$('#master-filter-freq').on('input', function(){
+		masterFilter.frequency.value = parseInt($(this).val());
+	});
+	$('#master-filter-q').on('input', function(){
+		masterFilter.Q.value = parseFloat($(this).val());
+	})
+	$('#master-filter-type').on('change', function(){
+		masterFilter.type = $(this).val();
+	})
+
+	$('#bpm').on('change', function(){
+		bpm = $(this).val();
+	})
+
+	var audioContext, masterFilter, bpm;
+
+	function draw(audioContext){
+		visualize(instruments['hihat'].analyser, instruments['hihat'].canvas, instruments['hihat'].canvasCtx);
+		visualize(instruments['snare'].analyser, instruments['snare'].canvas, instruments['snare'].canvasCtx);
+		visualize(instruments['kick'].analyser, instruments['kick'].canvas, instruments['kick'].canvasCtx);
+		visualize(instruments['bass'].analyser, instruments['bass'].canvas, instruments['bass'].canvasCtx);
+		requestAnimationFrame(draw);
+	}
+
+	function visualize(visualizer, canvas, canvasCtx){
+		var data = new Uint8Array(visualizer.fftSize);
+		visualizer.getByteTimeDomainData(data);
+		
+		canvasCtx.fillStyle = 'rgb(255, 255, 250)';
+		canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+		canvasCtx.lineWidth = 2;
+		canvasCtx.strokeStyle = 'rgb(0, 0, 0)';
+
+		canvasCtx.beginPath();
+
+		var sliceWidth = canvas.width * 1.0 / visualizer.fftSize;
+		var x = 0;
+
+		var total = 0;
+
+		for(var i = 0; i < visualizer.fftSize; i++) {
+			var v =  data[i] / 128;
+			var y = v * canvas.height * .5;
+
+			if(i === 0) {
+				canvasCtx.moveTo(x, y);
+			} else {
+				canvasCtx.lineTo(x, y);
+			}
+
+			x += sliceWidth;
+
+			total += v;
+		}
+
+		canvasCtx.lineTo(canvas.width, canvas.height/2);
+		canvasCtx.stroke();
+	}
+
+	//requestAnimationFrame(draw);
+
+	var whiteNoiseBuffer = null;
+	var clapSampleBuffer = null;
+
+	var instruments = {
+		hihat: {
+			decay     : 0.1,
+			noteLength: 0.5,
+			init: function(){
+				this.analyser = audioContext.createAnalyser();
+				this.analyser.fftSize = 2048/4;
+				this.analyser.connect(masterFilter);
+				this.canvas = $('#canvasWaveformChannel1')[0];
+				this.canvasCtx = this.canvas.getContext('2d');
+			},
+			play: function(time){
+				var whiteNoise = audioContext.createBufferSource(),
+					filter 	   = audioContext.createBiquadFilter(),
+					amp        = audioContext.createGain();
+
+			    whiteNoise.buffer = whiteNoiseBuffer;
+
+				filter.type = 'highpass';
+				filter.frequency.value = 12000;
+
+				amp.gain.setValueAtTime(.5, time);
+				amp.gain.linearRampToValueAtTime(0.01, time + this.decay);
+
+				whiteNoise.connect(filter);
+				filter.connect(amp);
+				amp.connect(this.analyser);
+
+				whiteNoise.start(time);
+			    whiteNoise.stop( time + this.decay );
+			}
+		},
+		snare: {
+			startFreq : 261.6*0.5,
+			endFreq   : 0.01,
+			decay     : 0.2,
+			init: function(){
+				this.analyser = audioContext.createAnalyser();
+				this.analyser.fftSize = 2048/4;
+				this.analyser.connect(masterFilter);
+				this.canvas = $('#canvasWaveformChannel2')[0];
+				this.canvasCtx = this.canvas.getContext('2d');
+			},
+			play: function(time){
+				/*var clap = audioContext.createBufferSource();
+			    clap.buffer = clapSampleBuffer;
+		        clap.connect(audioContext.destination);
+		        clap.start();*/
+		        var whiteNoise = audioContext.createBufferSource(),
+					filter 	   = audioContext.createBiquadFilter(),
+					amp        = audioContext.createGain(),
+					osc 	   = audioContext.createOscillator()
+					oscAmp     = audioContext.createGain();
+
+			    whiteNoise.buffer = whiteNoiseBuffer;
+
+				filter.type = 'highpass';
+				filter.frequency.value = 1000;
+
+				amp.gain.setValueAtTime(1, time);
+				amp.gain.exponentialRampToValueAtTime(0.01, time + this.decay);
+
+				whiteNoise.connect(filter);
+				filter.connect(amp);
+				amp.connect(this.analyser);
+
+				osc.type = "square";
+			    osc.frequency.setValueAtTime(200, time);
+				osc.connect(oscAmp);
+				oscAmp.connect(this.analyser);
+				oscAmp.gain.setValueAtTime(.1, time);
+				oscAmp.gain.exponentialRampToValueAtTime(0.01, time + this.decay * .25);
+
+				whiteNoise.start(time);
+			    whiteNoise.stop( time + this.decay );
+			    osc.start(time);
+			    osc.stop( time + this.decay );
+			}
+		},
+		kick: {
+			startFreq : 261.6*0.5,
+			endFreq   : 0.01,
+			decay     : 0.1,
+			noteLength: 0.5,
+			init: function(){
+				this.analyser = audioContext.createAnalyser();
+				this.analyser.fftSize = 2048/4;
+				this.analyser.connect(masterFilter);
+				this.canvas = $('#canvasWaveformChannel3')[0];
+				this.canvasCtx = this.canvas.getContext('2d');
+			},
+			play: function(time){
+				var osc = audioContext.createOscillator(),
+					filter = audioContext.createBiquadFilter(),
+					amp = audioContext.createGain();
+
+				osc.frequency.setValueAtTime(this.startFreq, time);
+				osc.frequency.linearRampToValueAtTime(this.endFreq, time + this.decay);
+
+				amp.gain.setValueAtTime(1, time);
+				amp.gain.linearRampToValueAtTime(0, time + this.noteLength);
+
+				osc.connect(filter);
+				filter.connect(amp);
+				amp.connect(this.analyser);
+				
+				osc.start( time );
+			    osc.stop( time + this.noteLength );
+			}
+		},
+		bass: {
+			attack  : 0,
+			release : 0,
+			filterFreq : 18000,
+			startFreq : 65.4,
+			endFreq   : 65.4,
+			decay     : 0.1,
+			noteLength: 0.2,
+			init: function(){
+				this.analyser = audioContext.createAnalyser();
+				this.analyser.fftSize = 2048/4;
+				this.analyser.connect(masterFilter);
+				this.canvas = $('#canvasWaveformChannel4')[0];
+				this.canvasCtx = this.canvas.getContext('2d');
+			},
+			play: function(time, freq){
+			    var oscillator = audioContext.createOscillator(), 
+					amp  = audioContext.createGain(), 
+					filter     = audioContext.createBiquadFilter();
+
+				oscillator.type = 'sawtooth';
+				//oscillator.frequency.value = this.startFreq;
+				oscillator.frequency.setValueAtTime(freq, time);
+				oscillator.frequency.exponentialRampToValueAtTime(freq , time + 0.1);
+
+				filter.type = "lowpass";
+				filter.Q.value = 10;
+				filter.gain.value = 1;
+				filter.frequency.setValueAtTime(1, time);
+				filter.frequency.exponentialRampToValueAtTime(this.filterFreq , time + this.attack);
+				filter.frequency.exponentialRampToValueAtTime(1 , time + this.attack + this.release + this.noteLength);
+
+				amp.gain.setValueAtTime(0.001, time);
+				amp.gain.exponentialRampToValueAtTime( .5, time + this.attack);
+				amp.gain.exponentialRampToValueAtTime(0.001 , time + this.attack + this.release + this.noteLength);
+
+				oscillator.connect(filter);
+				filter.connect(amp);
+				amp.connect(this.analyser);
+
+				oscillator.start(time);
+				oscillator.stop(time + this.attack + this.release + this.noteLength);
+			}
+		}
+	}
+
+	function init(){
+		audioContext = new AudioContext() || new webkitAudioContext();
+
+		masterFilter = audioContext.createBiquadFilter();
+		masterFilter = audioContext.createBiquadFilter();
+		masterFilter.connect(audioContext.destination);
+
+		bpm = 110;
+
+		prepareBuffers();
+		instruments['hihat'].init();
+		instruments['snare'].init();
+		instruments['kick'].init();
+		instruments['bass'].init();
+	}
+
+
+	prepareBuffers = function(){
+		// White noise
+		whiteNoiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate, audioContext.sampleRate);
+		var output = whiteNoiseBuffer.getChannelData(0);
+		for (var i = 0; i < audioContext.sampleRate; i++) {
+			output[i] = Math.random() * 2 - 1;
+		}
+
+		// Clap sample
+		var request = new XMLHttpRequest();
+		request.open('GET', 'clap.wav', true);
+		request.responseType = 'arraybuffer';
+		request.onload = function () {
+		    var undecodedAudio = request.response;
+	 
+		    audioContext.decodeAudioData(undecodedAudio, function (buffer) {
+		        clapSampleBuffer = buffer;
+		    });
+		};
+		request.send();
+	}; // Load our samples and create a buffer of white noise
+
+	init();
+</script>
+</html>
