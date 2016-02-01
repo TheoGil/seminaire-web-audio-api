@@ -409,12 +409,12 @@
 				<div>
 					Release
 					<input type="range"  min="0" max="1" step="0.1" data-target="release" class="bass-setting" value="500">
-					<span class"length"></span>
+					<span></span>
 				</div>
 				<div>
 					Filter Frequency
 					<input type="range"  min="1" max="20000" step="100" data-target="filterFreq" class="bass-setting" value="18000">
-					<span class"length"></span>
+					<span></span>
 				</div>
 			</div>
 			<div class="pannel">
@@ -426,7 +426,7 @@
 					</label>
 				</div>
 				<div>
-					<label for="">
+					<label>
 						Resonance
 						<input id="master-filter-q" type="range"  min="1" max="25" step="1" value="1">
 					</label>
@@ -634,7 +634,6 @@
 			},
 			play: function(time){
 				var osc = audioContext.createOscillator(),
-					filter = audioContext.createBiquadFilter(),
 					amp = audioContext.createGain();
 
 				osc.frequency.setValueAtTime(this.startFreq, time);
@@ -715,7 +714,7 @@
 
 
 	prepareBuffers = function(){
-		// White noise
+		// We fill
 		whiteNoiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate, audioContext.sampleRate);
 		var output = whiteNoiseBuffer.getChannelData(0);
 		for (var i = 0; i < audioContext.sampleRate; i++) {
@@ -723,7 +722,7 @@
 		}
 
 		// Clap sample
-		var request = new XMLHttpRequest();
+		/*var request = new XMLHttpRequest();
 		request.open('GET', 'clap.wav', true);
 		request.responseType = 'arraybuffer';
 		request.onload = function () {
@@ -733,7 +732,7 @@
 		        clapSampleBuffer = buffer;
 		    });
 		};
-		request.send();
+		request.send();*/
 	}; // Load our samples and create a buffer of white noise
 
 	init();
