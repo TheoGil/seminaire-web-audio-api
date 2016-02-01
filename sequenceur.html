@@ -631,20 +631,21 @@
 				this.analyser.connect(masterFilter);
 				this.canvas = $('#canvasWaveformChannel3')[0];
 				this.canvasCtx = this.canvas.getContext('2d');
+
+                this.amp = audioContext.createGain();
 			},
 			play: function(time){
-				var osc = audioContext.createOscillator(),
-					amp = audioContext.createGain();
+				var osc = audioContext.createOscillator();
 
 				osc.frequency.setValueAtTime(this.startFreq, time);
 				osc.frequency.linearRampToValueAtTime(this.endFreq, time + this.decay);
 
-				amp.gain.setValueAtTime(1, time);
-				amp.gain.linearRampToValueAtTime(0, time + this.noteLength);
+                this.amp.gain.cancelScheduledValues(time);
+				this.amp.gain.setValueAtTime(1, time);
+				this.amp.gain.linearRampToValueAtTime(0, time + this.noteLength);
 
-				osc.connect(filter);
-				filter.connect(amp);
-				amp.connect(this.analyser);
+				osc.connect(this.amp);
+				this.amp.connect(this.analyser);
 				
 				osc.start( time );
 			    osc.stop( time + this.noteLength );
