@@ -50,7 +50,29 @@
 				<pre><code class="hljs" data-trim contenteditable>
 var audioContext = new AudioContext() || new webkitAudioContext();
 				</code></pre>
-                <p>L'AudioContext est notre factory avec laquelle on instancie tous les composants qui nous serviront à générer, manipuler ou analyser du son: <strong>les AudioNodes</strong></p>
+                <p>Factory avec laquelle on instancie <strong>les AudioNodes</strong></p>
+			</section>
+
+			<section>
+				<h2>Les AudioNodes:</h2>
+				<p>Les audionodes sont les modules qui vont nous servir à <em>générer</em>, <em>modifier</em> et <em>analyser</em> du son</p>
+				<pre><code class="hljs" data-trim contenteditable>
+audioNode.connect(anotherAudioNode);
+anotherNode.connect(audioContext.destination);
+				</code></pre>
+                <p>On chaine les modules audio entre eux grace à la méthode connect(), commune à toutes les audios nodes quelque soit leur type</p>
+			</section>
+
+			<section>
+				<h2>Routage Modulaire</h2>
+				<img src="src/img/schema-audiocontext.png">
+				<pre><code class="hljs" data-trim contenteditable>
+// On peut connecter un module à un autre pour les chainer
+AudioNode.connect(AudioNode);
+// On peut aussi connecter un module à un AudioParam!
+AudioNode.connect(AudioParam);
+				</code></pre>
+				<p>Connecte l'output d'un module à 'input d'une seconde</p>
 			</section>
 
 			<section>
@@ -78,7 +100,7 @@ source.stop(audioContext.currentTime + 1);
 var sourceBuffer = audioContext.createBufferSource();
 var request = new XMLHttpRequest();
 	 
-request.open('GET', 'src/lyncollins-thinkaboutit.wav', true);
+request.open('GET', 'src/awyeah.mp3', true);
 request.responseType = 'arraybuffer';
  
 request.onload = function () {
@@ -103,22 +125,17 @@ request.send();
 					<h4>MediaElementAudioSourceNode</h4>
 					<p>AudioNode ayant comme source un element &lt;audio&gt; ou &lt;video&gt;</p>
 					<p>Pour les extraits audio de longue durée</p>
-					<audio src="src/lyncollins-thinkaboutit.wav" id="myAudioElement"></audio>
 					<pre><code class="hljs" data-trim id="exampleMediaElementAudioSourceNode" contenteditable>
 var audioElement = document.getElementById('myAudioElement');
 var AudioSourceNode = audioContext.createMediaElementSource(audioElement);
 AudioSourceNode.connect(audioContext.destination);
 AudioSourceNode.mediaElement.play();
-//mediaElementAudioSourceNode.stop(audioContext.currentTime + 5);
 					</code></pre>
-					<button class="eval" data-target="#exampleMediaElementAudioSourceNode">Play</button>
 				</section>
 
 				<section>
 					<h4>MediaStreamAudioSourceNode</h4>
-					<p>AudioNode ayant pour source </p>
-					<p>Pour les extraits audio de longue durée</p>
-					<audio src="src/lyncollins-thinkaboutit.wav" id="myAudioElement"></audio>
+					<p>AudioNode ayant pour source un MediaStream (par exemple, son provenant du micro)</p>
 					<pre><code class="hljs" data-trim id="exampleStreamElementAudioSourceNode" contenteditable>
 navigator.getUserMedia = (navigator.getUserMedia ||
 	navigator.webkitGetUserMedia ||
@@ -129,10 +146,9 @@ navigator.getUserMedia({audio: true, video: false}, function(stream){
 	mediaStreamSource = audioContext.createMediaStreamSource(stream);
 	mediaStreamSource.connect(audioContext.destination);
 }, function(err) {
-	console.log('The following gUM error occured: ' + err);
+	console.log(err);
 });
 					</code></pre>
-					<button class="eval" data-target="#exampleStreamElementAudioSourceNode">Play</button>
 				</section>
 			</section>
 
@@ -142,27 +158,48 @@ navigator.getUserMedia({audio: true, video: false}, function(stream){
 					<h3>Traitement</h3>
 					<div><small>Celles qui manipulent le bruit</small></div>
 				</section>
+
 				<section>
-					<h4>GainNode</h4>
-					<pre><code class="hljs" data-trim id="exampleGainNode" contenteditable>
+					<h4>BiquadFilterNode</h4>
+					<!--<pre><code class="hljs" data-trim id="exampleFilterNode" contenteditable>
 var osc = audioContext.createOscillator();
-var amp = audioContext.createGain();
+var filter = audioContext.createBiquadFilter();
 
 osc.type = "sawtooth";
 osc.frequency.value = 50;
 
-osc.connect(amp);
-amp.connect(audioContext.destination);
+osc.connect(filter);
+filter.connect(audioContext.destination);
 
-amp.gain.setValueAtTime(0.001, audioContext.currentTime);
-amp.gain.exponentialRampToValueAtTime(1, audioContext.currentTime + 1);
-amp.gain.setValueAtTime(1, audioContext.currentTime + 1);
-amp.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2);
+filter.type = "lowpass"; //lowpass, highpass, bandpass, lowshelf, highshelf, peaking, notch, allpass
+
+filter.frequency.setValueAtTime(0.001, audioContext.currentTime);
+filter.frequency.exponentialRampToValueAtTime(5000, audioContext.currentTime + 1);
+filter.frequency.setValueAtTime(5000, audioContext.currentTime + 1);
+filter.frequency.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2);
 
 osc.start();
 osc.stop(audioContext.currentTime + 3);
 					</code></pre>
-					<button class="eval" data-target="#exampleGainNode">Play</button>
+					<button class="eval" data-target="#exampleFilterNode">Play</button>-->
+
+					<audio src="src/EarthWind&Fire-Let'sGroove.mp3" id="filterExampleAudioElement" controls="true"></audio>
+					<div><label for="">Fréquence <input type="range" min="1" max="20000" value="20000" id="filterFreq"></label></div>
+					<div><label for="">Résonance <input type="range" min="0" max="10" value="0" id="filterQ"></label></div>
+					<div>
+						<label for="">
+							Type de filtre
+							<select name="" id="filterType">
+								<option value="lowpass">Lowpass</option>
+								<option value="highpass">Highpass</option>
+								<option value="bandpass">Bandpass</option>
+								<option value="lowshelf">Lowshelf</option>
+								<option value="highshelf">Highshelf</option>
+								<option value="peaking">Peaking</option>
+								<option value="notch">notch</option>
+							</select>
+						</label>
+					</div>
 				</section>
 
 				<section>
@@ -188,6 +225,29 @@ osc.start();
 osc.stop(audioContext.currentTime + 3);
 					</code></pre>
 					<button class="eval" data-target="#exampleFilterNode">Play</button>
+				</section>
+
+				<section>
+					<h4>GainNode</h4>
+					<pre><code class="hljs" data-trim id="exampleGainNode" contenteditable>
+var osc = audioContext.createOscillator();
+var amp = audioContext.createGain();
+
+osc.type = "sawtooth";
+osc.frequency.value = 50;
+
+osc.connect(amp);
+amp.connect(audioContext.destination);
+
+amp.gain.setValueAtTime(0.001, audioContext.currentTime);
+amp.gain.exponentialRampToValueAtTime(1, audioContext.currentTime + 1);
+amp.gain.setValueAtTime(1, audioContext.currentTime + 1);
+amp.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 2);
+
+osc.start();
+osc.stop(audioContext.currentTime + 3);
+					</code></pre>
+					<button class="eval" data-target="#exampleGainNode">Play</button>
 				</section>
 
 				<section>
@@ -268,45 +328,13 @@ request.send();
 					</code></pre>
 					<button class="eval" data-target="#exampleConvolverNode">Play</button>
 				</section>
-
-				<section>
-					<h4>ConvolverNode</h4>
-					<pre><code class="hljs" data-trim id="exampleConvolverNode" contenteditable>
-var reverb = audioContext.createConvolver();
-var osc = audioContext.createOscillator();
-osc.type = "sawtooth";
-osc.frequency.value = 100;
-var request = new XMLHttpRequest();
-	 
-request.open('GET', 'src/impulse.wav', true);
-request.responseType = 'arraybuffer';
- 
-request.onload = function () {
-    var undecodedAudio = request.response;
-
-    audioContext.decodeAudioData(undecodedAudio, function (buffer) {
-    	reverb.buffer = buffer;
-    	osc.connect(audioContext.destination);
-    	osc.connect(reverb);
-        reverb.connect(audioContext.destination);
-
-        osc.start();
-        osc.stop(audioContext.currentTime + .1);
-    });
-};
- 
-request.send();
-					</code></pre>
-					<button class="eval" data-target="#exampleConvolverNode">Play</button>
-				</section>
-				
 			</section>
 
 			<section>
 				<section>
 					<h2>Les AudioNodes</h2>
 					<h3>Analyse</h3>
-					<p>Celles qui analysent le bruit</p>
+					<p><small>Celles qui analysent le bruit</small></p>
 				</section>
 
 				<section>
@@ -318,70 +346,96 @@ source.connect(analyser);
 				</section>
 
 				<section>
-					<div><canvas id="freqanalysis" height="100" width="200"></canvas></div>
-					<audio src="src/lyncollins-thinkaboutit.wav" id="analysisAudioTrack" controls="true"></audio>
+					<h3>Frequency analysis</h3>
+					<div><canvas id="freqanalysis" height="100" width="500"></canvas></div>
+					<audio src="src/EarthWind&Fire-Let'sGroove.mp3" id="analysisAudioTrack" controls="true"></audio>
 					<pre><code class="hljs" data-trim contenteditable>
-var freqData     = Uint8Array(analyser.frequencyBinCount);
-var canvasHeight = canvas.height;
-var canvasWidth  = canvas.height;
+var freqAnalyser = audioContext.createAnalyser();
+freqAnalyser.fftSize =  128;
+var freqData = new Float32Array(freqAnalyser.frequencyBinCount);
 
-function draw(){
-	analyser.getByteFRequencyData(freqData);
-	for(var i = 0; i < analyser.frequencyBinCount; i++){
-		var value     = freqData[i];
-		var percent   = value / 255; // Because it's an 8bit unsigned int (max value = 255)
-		var batHeight = canvasHeight * percent;
-		var barWidth  = canvasWidth / analyser.frequencyBinCount;
-		var barHue    = i / analyser.frequencyBinCount * 360;
+audio.connect(freqAnalyser);
+freqAnalyser.connect(audioContext.destination);
+
+function drawFrequencies(){
+	freqAnalyser.getFloatFrequencyData(freqData);
+
+	canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+
+	var barWidth = (canvas.width / freqAnalyser.frequencyBinCount);
+	var barHeight;
+	var x = 0;
+
+	for(var i = 0; i < freqAnalyser.frequencyBinCount; i++) {
+		barHeight = (freqData[i] + 140)*2;
+		var barHue    = i / freqAnalyser.frequencyBinCount * 360;
 		canvasCtx.fillStyle = 'hsl(' + barHue + ', 100%, 50%)';
-		canvasCtx.fillRect(i * barWidth, 0, barWidth, barHeight);
+		canvasCtx.fillRect(x,canvas.height-barHeight/2,barWidth,barHeight/2);
+		x += barWidth + 1;
 	}
+	requestAnimationFrame(drawFrequencies);
 }
+drawFrequencies();
 					</code></pre>
-					<span id="test"></span>
+				</section>
+
+				<section>
+					<h3>Waveform analysis</h3>
+					<div><canvas id="waveanalysis" height="100" width="500"></canvas></div>
+					<audio src="src/EarthWind&Fire-Let'sGroove.mp3" id="analysisAudioTrackWaverform" controls="true"></audio>
+					<pre><code class="hljs" data-trim contenteditable>
+var analyser = audioContext.createAnalyser();
+analyser.fftSize =  128;
+var freqData = new Float32Array(analyser.frequencyBinCount);
+
+audio.connect(analyser);
+analyser.connect(audioContext.destination);
+
+function drawWaveform(){
+	analyser.getFloatTimeDomainData(freqData2);
+
+	canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+
+	canvasCtx.lineWidth = 2;
+	canvasCtx.strokeStyle = 'rgb(255, 255, 255)';
+	canvasCtx.beginPath();
+
+	var sliceWidth = canvas.width * 1.0 / analyser.frequencyBinCount;
+	var x = 0;
+
+	for(var i = 0; i < analyser.frequencyBinCount; i++) {
+		var v = freqData2[i] * 200.0;
+		var y = canvas.height/2 + v;
+
+		if(i === 0) {
+			canvasCtx.moveTo(x, y);
+		} else {
+			canvasCtx.lineTo(x, y);
+		}
+		x += sliceWidth;
+	}
+
+	canvasCtx.lineTo(canvas.width, canvas.height/2);
+	canvasCtx.stroke();
+	requestAnimationFrame(drawWaveform);
+}
+drawWaveform();
+					</code></pre>
 				</section>
 			</section>
-
 			<section>
-				<h2>Routage Modulaire</h2>
-				<pre><code class="hljs" data-trim contenteditable>
-// On peut connecter un module à un autre pour les chainer
-AudioNode.connect(AudioNode);
-// On peut aussi connecter un module à un AudioParam!
-AudioNode.connect(AudioParam);
-				</code></pre>
-				<p>Connecte l'output d'un module à 'input d'une seconde</p>
+				<h1>Let's build a drum machine!</h1>
 			</section>
 
 			<section>
-				<img src="src/img/schema-audiocontext.png">
-				<pre><code class="hljs" data-trim id="example1" contenteditable>
-var source = audioContext.createOscillator();
-source.connect(audioContext.destination);
-source.start();
-source.stop(audioContext.currentTime + 1);
-				</code></pre>
-				<button class="eval" data-target="#example1">Play</button>
+				<ul>
+					<li class="fragment">Drumkit basique entièrement synthétisé dans le navigateur (pas de samples!)</li>
+					<li class="fragment">Arrangement des séquences en temp réel</li>
+					<li class="fragment">Controle du tempo</li>
+					<li class="fragment">...</li>
+					<li class="fragment">Profit</li>
+				</ul>
 			</section>
-
-			<section>
-				<img src="src/img/schema-audiocontext.png">
-				<pre><code class="hljs" data-trim id="example1" contenteditable>
-var source = audioContext.createOscillator();
-source.connect(audioContext.destination);
-source.start();
-source.stop(audioContext.currentTime + 1);
-				</code></pre>
-				<button class="eval" data-target="#example1">Play</button>
-			</section>
-
-			<!--<section>
-				<h2>Un peu d'AudioContext</h2>
-				<figure>
-					<img src="src/img/schema-audiocontext2.png">
-					<figcaption>Un graphe audio un peu plus complexe<figcaption>
-				</figure>
-			</section>-->
 		</div>
 	</div>
 </body>
@@ -404,30 +458,107 @@ source.stop(audioContext.currentTime + 1);
 		if($code.length){
 			eval($code.text());
 		}
-	})
+	});
+
+	/**
+	*	EXAMPLE BIQUADFILTERNODE
+	*/
+	var filter = audioContext.createBiquadFilter();
+	$('#filterFreq').on('input', function(){
+		filter.frequency.value = parseInt($(this).val());
+	});
+	$('#filterQ').on('input', function(){
+		filter.Q.value = parseInt($(this).val());
+	});
+	$('#filterType').on('change', function(){
+		filter.type = $(this).val();
+	});
+
+	var filterExampleAudioElement = document.getElementById('filterExampleAudioElement');
+	var filterExampleSource = audioContext.createMediaElementSource(filterExampleAudioElement);
+	filterExampleSource.connect(filter);
+	filter.connect(audioContext.destination);
+
+
+
+	/**
+	*	ANALYSE FREQUENCES
+	*/
+	var audio    = audioContext.createMediaElementSource(document.getElementById('analysisAudioTrack'));
 
 	var canvas   = document.getElementById('freqanalysis');
 	var canvasCtx= canvas.getContext('2d');
-	var analyser = audioContext.createAnalyser();
-	var audio    = audioContext.createMediaElementSource(document.getElementById('myAudioElement'));
-	var canvasHeight = canvas.height;
-	var canvasWidth  = canvas.height;
-	audio.connect(analyser);
 
-	function draw(){
-		var freqData = new Uint8Array(analyser.frequencyBinCount);
-		analyser.getByteFrequencyData(freqData);
-		for(var i = 0; i < analyser.frequencyBinCount; i++){
-			var value     = freqData[i];
-			var percent   = value / 255; // Because it's an 8bit unsigned int (max value = 255)
-			var barHeight = canvasHeight * percent + 50;
-			var barWidth  = canvasWidth / analyser.frequencyBinCount;
-			var barHue    = i / analyser.frequencyBinCount * 360;
+	var freqAnalyser = audioContext.createAnalyser();
+	freqAnalyser.fftSize =  128;
+	var freqData = new Float32Array(freqAnalyser.frequencyBinCount);
+
+	audio.connect(freqAnalyser);
+	freqAnalyser.connect(audioContext.destination);
+
+	function drawFrequencies(){
+		freqAnalyser.getFloatFrequencyData(freqData);
+
+		canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+
+		var barWidth = (canvas.width / freqAnalyser.frequencyBinCount);
+		var barHeight;
+		var x = 0;
+
+		for(var i = 0; i < freqAnalyser.frequencyBinCount; i++) {
+			barHeight = (freqData[i] + 140)*2;
+			var barHue    = i / freqAnalyser.frequencyBinCount * 360;
 			canvasCtx.fillStyle = 'hsl(' + barHue + ', 100%, 50%)';
-			canvasCtx.fillRect(i * barWidth, canvasHeight, barWidth, -barHeight);
+			canvasCtx.fillRect(x,canvas.height-barHeight/2,barWidth,barHeight/2);
+			x += barWidth + 1;
 		}
-		requestAnimationFrame(draw);
+		requestAnimationFrame(drawFrequencies);
 	}
-	draw();
+	drawFrequencies();
+
+	/**
+	*	ANALYSE ONDE
+	*/
+	var waveFormAudio = audioContext.createMediaElementSource(document.getElementById('analysisAudioTrackWaverform'));
+
+	var canvas2   = document.getElementById('waveanalysis');
+	var canvasCtx2= canvas2.getContext('2d');
+
+	var waveAnalyser = audioContext.createAnalyser();
+	waveAnalyser.fftSize =  128;
+	var freqData2 = new Float32Array(waveAnalyser.frequencyBinCount);
+
+	waveFormAudio.connect(waveAnalyser);
+	waveAnalyser.connect(audioContext.destination);
+
+	function drawWaveform(){
+		waveAnalyser.getFloatTimeDomainData(freqData2);
+
+		canvasCtx2.clearRect(0, 0, canvas2.width, canvas2.height);
+
+		canvasCtx2.lineWidth = 2;
+		canvasCtx2.strokeStyle = 'rgb(255, 255, 255)';
+		canvasCtx2.beginPath();
+
+		var sliceWidth = canvas2.width * 1.0 / waveAnalyser.frequencyBinCount;
+		var x = 0;
+
+		for(var i = 0; i < waveAnalyser.frequencyBinCount; i++) {
+			var v = freqData2[i] * 200.0;
+			var y = canvas2.height/2 + v;
+
+			if(i === 0) {
+				canvasCtx2.moveTo(x, y);
+			} else {
+				canvasCtx2.lineTo(x, y);
+			}
+			x += sliceWidth;
+		}
+
+		canvasCtx2.lineTo(canvas.width, canvas.height/2);
+		canvasCtx2.stroke();
+		requestAnimationFrame(drawWaveform);
+	}
+	drawWaveform();
 </script>
 </html>
