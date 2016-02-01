@@ -18,6 +18,14 @@
 				<h1>Web Audio API</h1>
 			</section>
 
+            <section>
+                <h2>Exemples d'utilisation</h2>
+                <ul>
+                    <li><a href="http://www.madeon.fr/adventuremachine/">Madeon’s Adventure Machine</a></li>
+                    <li><a href="http://www.because-recollection.com/">Because Recollection</a></li>
+                </ul>
+            </section>
+
 			<section>
 				<p>Web Audio API != &lt;audio&gt;</p>
 			</section>
@@ -42,6 +50,7 @@
 				<pre><code class="hljs" data-trim contenteditable>
 var audioContext = new AudioContext() || new webkitAudioContext();
 				</code></pre>
+                <p>L'AudioContext est notre factory avec laquelle on instancie tous les composants qui nous serviront à générer, manipuler ou analyser du son: <strong>les AudioNodes</strong></p>
 			</section>
 
 			<section>
@@ -334,9 +343,12 @@ function draw(){
 			</section>
 
 			<section>
-				<h2>Les AudioNodes</h2>
+				<h2>Routage Modulaire</h2>
 				<pre><code class="hljs" data-trim contenteditable>
+// On peut connecter un module à un autre pour les chainer
 AudioNode.connect(AudioNode);
+// On peut aussi connecter un module à un AudioParam!
+AudioNode.connect(AudioParam);
 				</code></pre>
 				<p>Connecte l'output d'un module à 'input d'une seconde</p>
 			</section>
